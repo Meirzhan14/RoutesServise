@@ -5,15 +5,18 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.IntStream;
+import java.util.Set;
 
 @Service
 public class RouteService {
-    private final Map<Integer, List<Integer>> routeStops = new HashMap<>();
+    private Map<Integer, Set<Integer>> routeStops;
+
+    public RouteService() {
+        routeStops = new HashMap<>();
+    }
 
     public RouteResponse checkRoute(Integer from, Integer to) {
         RouteResponse response = new RouteResponse();
@@ -43,19 +46,35 @@ public class RouteService {
         }
 
         int routeId = Integer.parseInt(parts[0]);
+        Set<Integer> stops = routeStops.computeIfAbsent(routeId, k -> new HashSet<>());
 
         for (int i = 1; i < parts.length; i++) {
             int stopId = Integer.parseInt(parts[i]);
-            routeStops.computeIfAbsent(routeId, k -> new ArrayList<>()).add(stopId);
+            stops.add(stopId);
         }
     }
 
     public boolean hasDirectRoute(int from, int to) {
-        return routeStops.values().parallelStream().anyMatch(stops -> stops.contains(from) && stops.contains(to) &&
-                findStopIndex(stops, from) < findStopIndex(stops, to));
+        for (Set<Integer> stops : routeStops.values()) {
+            if (stops.contains(from) && stops.contains(to)) {
+                int fromIndex = findStopIndex(stops, from);
+                int toIndex = findStopIndex(stops, to);
+                if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    private int findStopIndex(List<Integer> stops, int stopId) {
-        return IntStream.range(0, stops.size()).filter(i -> stops.get(i) == stopId).findFirst().orElse(-1);
+    private int findStopIndex(Set<Integer> stops, int stopId) {
+        int index = 0;
+        for (int stop : stops) {
+            if (stop == stopId) {
+                return index;
+            }
+            index++;
+        }
+        return -1;
     }
 }
