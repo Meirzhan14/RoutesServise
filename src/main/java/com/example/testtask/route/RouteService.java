@@ -5,14 +5,14 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Service
 public class RouteService {
-    private Map<Integer, Set<Integer>> routeStops;
+    private Map<Integer, List<Integer>> routeStops;
 
     public RouteService() {
         routeStops = new HashMap<>();
@@ -46,7 +46,7 @@ public class RouteService {
         }
 
         int routeId = Integer.parseInt(parts[0]);
-        Set<Integer> stops = routeStops.computeIfAbsent(routeId, k -> new HashSet<>());
+        List<Integer> stops = routeStops.computeIfAbsent(routeId, k -> new ArrayList<>());
 
         for (int i = 1; i < parts.length; i++) {
             int stopId = Integer.parseInt(parts[i]);
@@ -55,7 +55,7 @@ public class RouteService {
     }
 
     public boolean hasDirectRoute(int from, int to) {
-        for (Set<Integer> stops : routeStops.values()) {
+        for (List<Integer> stops : routeStops.values()) {
             if (stops.contains(from) && stops.contains(to)) {
                 int fromIndex = findStopIndex(stops, from);
                 int toIndex = findStopIndex(stops, to);
@@ -67,7 +67,7 @@ public class RouteService {
         return false;
     }
 
-    private int findStopIndex(Set<Integer> stops, int stopId) {
+    private int findStopIndex(List<Integer> stops, int stopId) {
         int index = 0;
         for (int stop : stops) {
             if (stop == stopId) {
