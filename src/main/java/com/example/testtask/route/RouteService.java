@@ -5,39 +5,37 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 @Service
 public class RouteService {
     private final Map<Integer, List<Integer>> routeStops = new HashMap<>();
-    boolean hasDirect = false;
 
     public RouteResponse checkRoute(Integer from, Integer to) {
-        hasDirect = false;
         RouteResponse response = new RouteResponse();
         response.setFrom(from);
         response.setTo(to);
-
-        response.setDirect(loadRoutesFromFile("C:\\test\\routes.txt", from, to));
+        response.setDirect(hasDirectRoute(from, to));
 
         return response;
     }
 
-    public boolean loadRoutesFromFile(String filePath, int from, int to) {
+    public void loadRoutesFromFile(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
-            while ((line = reader.readLine()) != null && !hasDirect) {
-                processRouteLine(line, from, to);
+            while ((line = reader.readLine()) != null) {
+                processRouteLine(line);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return hasDirect;
     }
 
-    private void processRouteLine(String line, int from, int to) {
+    private void processRouteLine(String line) {
         String[] parts = line.split(" ");
         if (parts.length < 2) {
             // Некорректный формат строки маршрута
@@ -45,21 +43,16 @@ public class RouteService {
         }
 
         int routeId = Integer.parseInt(parts[0]);
-        Set<Integer> stops = new HashSet<>();
 
         for (int i = 1; i < parts.length; i++) {
             int stopId = Integer.parseInt(parts[i]);
-            stops.add(stopId);
-
             routeStops.computeIfAbsent(routeId, k -> new ArrayList<>()).add(stopId);
         }
-
-        hasDirect = hasDirectRoute(from, to, routeStops.get(routeId));
     }
 
-    public boolean hasDirectRoute(int fromStop, int toStop, List<Integer> stops) {
-        return stops.contains(fromStop) && stops.contains(toStop) &&
-                findStopIndex(stops, fromStop) < findStopIndex(stops, toStop);
+    public boolean hasDirectRoute(int from, int to) {
+        return routeStops.values().parallelStream().anyMatch(stops -> stops.contains(from) && stops.contains(to) &&
+                findStopIndex(stops, from) < findStopIndex(stops, to));
     }
 
     private int findStopIndex(List<Integer> stops, int stopId) {

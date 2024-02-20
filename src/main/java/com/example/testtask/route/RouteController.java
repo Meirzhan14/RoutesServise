@@ -12,6 +12,7 @@ public class RouteController {
 
     public RouteController(RouteService routeService) {
         this.routeService = routeService;
+        routeService.loadRoutesFromFile("C:\\test\\routes.txt");
     }
 
     @GetMapping
