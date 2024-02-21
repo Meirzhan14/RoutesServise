@@ -15,6 +15,7 @@ public class RouteService {
     public RouteService() {
         routeStops = new HashMap<>();
         stopRoutes = new HashMap<>();
+        loadRoutesFromFile("C:\\test\\routes.txt");
     }
 
     public RouteResponse checkRoute(Integer from, Integer to) {
