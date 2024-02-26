@@ -5,11 +5,14 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class RouteService {
-    private final Map<Integer, List<Integer>> routeStops;
+    private final Map<Integer, Map<Integer, Integer>> routeStops;
     private final Map<Integer, Set<Integer>> stopRoutes;
 
     public RouteService() {
@@ -46,11 +49,14 @@ public class RouteService {
         }
 
         int routeId = Integer.parseInt(parts[0]);
-        List<Integer> stops = routeStops.computeIfAbsent(routeId, k -> new ArrayList<>());
+        Map<Integer, Integer> stopIDIndexMap = new HashMap<>();
 
         for (int i = 1; i < parts.length; i++) {
             int stopId = Integer.parseInt(parts[i]);
-            stops.add(stopId);
+            stopIDIndexMap.put(stopId, i);
+
+            routeStops.put(routeId, stopIDIndexMap);
+
             stopRoutes.computeIfAbsent(stopId, k -> new HashSet<>()).add(routeId);
         }
     }
@@ -67,26 +73,11 @@ public class RouteService {
 
         if (!routesFrom.isEmpty()) {
             for (int routeID : routesFrom) {
-                List<Integer> stops = routeStops.get(routeID);
+                Map<Integer, Integer> stopIDIndexMap = routeStops.get(routeID);
 
-                int fromIndex = findStopIndex(stops, from);
-                int toIndex = findStopIndex(stops, to);
-                if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
-                    return true;
-                }
+                return stopIDIndexMap.get(from) < stopIDIndexMap.get(to);
             }
         }
         return false;
-    }
-
-    private int findStopIndex(List<Integer> stops, int stopId) {
-        int index = 0;
-        for (int stop : stops) {
-            if (stop == stopId) {
-                return index;
-            }
-            index++;
-        }
-        return -1;
     }
 }
